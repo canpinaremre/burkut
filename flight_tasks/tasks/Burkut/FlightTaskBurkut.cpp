@@ -2,6 +2,9 @@
 
 #include <cmath>
 
+using namespace matrix;
+
+
 bool FlightTaskBurkut::activate(vehicle_local_position_setpoint_s last_setpoint)
 {
 
@@ -146,10 +149,11 @@ bool FlightTaskBurkut::update()
 		}
 
 		break;
-	case 4://iniş şimdilik sabit dur
-		_position_setpoint(0) = _origin_x;
-		_position_setpoint(1) = _origin_y;
-		_position_setpoint(2) = _origin_z;
+	case 4://iniş
+
+		_position_setpoint = Vector3f(_origin_x,_origin_y,NAN);
+
+		_velocity_setpoint = Vector3f(Vector3f(NAN,NAN,0.25f));
 
 
 
