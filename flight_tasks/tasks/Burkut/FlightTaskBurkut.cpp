@@ -128,7 +128,7 @@ bool FlightTaskBurkut::update()
 
 			// ************* alınan origin => x,y,z = 0,0,2 ***************
 			_counter = 0.0f; // counterın sıfırlandığını kontrol edip sonraki stage i öyle başlatıyoruz.
-			_stage = 4; // daire çizmeye başla , stage-3 geçilsin.
+			_stage = 3; // daire çizmeye başla , stage-3 geçilsin.
 			//sonraki görev için gerekli parametreler.Loop değil activate gibi
 			//çalışması için burdaki geçiş koşulunun içerisine yazılır.
 			//her loop başlangıcında bir değeri tekrar atamak zorunda kalmasın diye.
