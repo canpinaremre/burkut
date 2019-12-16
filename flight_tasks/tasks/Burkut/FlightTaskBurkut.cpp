@@ -2,8 +2,20 @@
 
 #include <cmath>
 
+#include <uORB/topics/vehicle_land_detected.h>
+#include <uORB/Publication.hpp>
+
 using namespace matrix;
 
+vehicle_land_detected_s _land_detected = {
+		.timestamp = 0,
+		.alt_max = -1.0f,
+		.freefall = false,
+		.ground_contact = true,
+		.maybe_landed = true,
+		.landed = true,
+	};
+uORB::Publication<vehicle_land_detected_s> _vehicle_land_detected_pub{ORB_ID(vehicle_land_detected)};
 
 bool FlightTaskBurkut::activate(vehicle_local_position_setpoint_s last_setpoint)
 {
@@ -116,7 +128,7 @@ bool FlightTaskBurkut::update()
 
 			// ************* alınan origin => x,y,z = 0,0,2 ***************
 			_counter = 0.0f; // counterın sıfırlandığını kontrol edip sonraki stage i öyle başlatıyoruz.
-			_stage = 3; // daire çizmeye başla , stage-3 geçilsin.
+			_stage = 4; // daire çizmeye başla , stage-3 geçilsin.
 			//sonraki görev için gerekli parametreler.Loop değil activate gibi
 			//çalışması için burdaki geçiş koşulunun içerisine yazılır.
 			//her loop başlangıcında bir değeri tekrar atamak zorunda kalmasın diye.
@@ -151,12 +163,21 @@ bool FlightTaskBurkut::update()
 		break;
 	case 4://iniş
 
-		_position_setpoint = Vector3f(_origin_x,_origin_y,NAN);
+		_position_setpoint = Vector3f(_origin_x,_origin_y,NAN);//konum sabitle
+		_velocity_setpoint(2) = 0.2f; // aşağı hız
 
-		_velocity_setpoint = Vector3f(Vector3f(NAN,NAN,0.25f));
+		//disarm zamanı 160 yada 1.98 metre aşağısı
+
+		if(  ( _counter >= 160.0f) || (_position(2)-_origin_z > 1.98f) )
+		{
+			_vehicle_land_detected_pub.publish(_land_detected);
+			_stage = 5;
+		}
 
 
-
+		break;
+	case 5://bitiş
+		_vehicle_land_detected_pub.publish(_land_detected);
 		break;
 
 	default:
