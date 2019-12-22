@@ -1,12 +1,9 @@
 #include "FlightTaskBurkut.hpp"
 
-#include <cmath>
-
-#include <uORB/topics/vehicle_land_detected.h>
-#include <uORB/Publication.hpp>
 
 using namespace matrix;
 
+/*
 vehicle_land_detected_s _land_detected = {
 		.timestamp = 0,
 		.alt_max = -1.0f,
@@ -15,7 +12,46 @@ vehicle_land_detected_s _land_detected = {
 		.maybe_landed = true,
 		.landed = true,
 	};
+
+position_setpoint_s _spsp{
+	.type = position_setpoint_s::SETPOINT_TYPE_LAND,
+	.velocity_valid = true,
+	.velocity_frame = 1,
+	.alt_valid = false,
+
+};
+
+
+
 uORB::Publication<vehicle_land_detected_s> _vehicle_land_detected_pub{ORB_ID(vehicle_land_detected)};
+uORB::Publication<position_setpoint_s>	_position_setpoint_pub{ORB_ID(position_setpoint)};
+
+*/
+void FlightTaskBurkut::_publishVehicleCmdDoLand()
+{
+	vehicle_command_s command{};
+	command.timestamp = hrt_absolute_time();
+	command.command = vehicle_command_s::VEHICLE_CMD_DO_SET_MODE;
+	command.param1 = (float)1; // base mode
+	command.param3 = (float)0; // sub mode
+	command.target_system = 1;
+	command.target_component = 1;
+	command.source_system = 1;
+	command.source_component = 1;
+	command.confirmation = false;
+	command.from_external = false;
+	command.param2 = (float)PX4_CUSTOM_MAIN_MODE_AUTO;
+	command.param3 = (float)PX4_CUSTOM_SUB_MODE_AUTO_LAND;
+
+	// publish the vehicle command
+	_pub_vehicle_command.publish(command);
+
+	_param_mpc_auto_mode.set(_default_mpc_auto_mode);
+	updateParams();
+	handleParameterUpdate();
+	//_param_mpc_auto_mode.commit_no_notification();
+}
+
 
 bool FlightTaskBurkut::activate(vehicle_local_position_setpoint_s last_setpoint)
 {
@@ -128,7 +164,7 @@ bool FlightTaskBurkut::update()
 
 			// ************* alınan origin => x,y,z = 0,0,2 ***************
 			_counter = 0.0f; // counterın sıfırlandığını kontrol edip sonraki stage i öyle başlatıyoruz.
-			_stage = 3; // daire çizmeye başla , stage-3 geçilsin.
+			_stage = 4; // daire çizmeye başla , stage-3 geçilsin.
 			//sonraki görev için gerekli parametreler.Loop değil activate gibi
 			//çalışması için burdaki geçiş koşulunun içerisine yazılır.
 			//her loop başlangıcında bir değeri tekrar atamak zorunda kalmasın diye.
@@ -158,26 +194,47 @@ bool FlightTaskBurkut::update()
 			// ************* alınan origin => x,y,z = 0,0,2 ***************
 			_counter = 0.0f;
 			_stage = 4;
+			_position_setpoint = Vector3f(NAN,NAN,NAN);
+			_velocity_setpoint = Vector3f(NAN,NAN,NAN);
+
 		}
 
 		break;
 	case 4://iniş
 
-		_position_setpoint = Vector3f(_origin_x,_origin_y,NAN);//konum sabitle
-		_velocity_setpoint(2) = 0.2f; // aşağı hız
+		updateParams();
+		// publish the vehicle command
+		_publishVehicleCmdDoLand();
+		//updateParams();
+		//_param_mpc_auto_mode.update();
+		//
 
-		//disarm zamanı 160 yada 1.98 metre aşağısı
 
-		if(  ( _counter >= 160.0f) || (_position(2)-_origin_z > 1.98f) )
-		{
-			_vehicle_land_detected_pub.publish(_land_detected);
-			_stage = 5;
+
+		//TEST FOR PARAMETER:
+		//
+		//
+		//
+		/*
+		sonuc = _param_mpc_auto_mode.get();
+		if(sonuc == 0){
+			_velocity_setpoint(2) = -2.0f;
 		}
-
+		else if(sonuc == 1){
+			_velocity_setpoint(1) = 3.0f;
+		}
+		else if(sonuc == 2){
+			_velocity_setpoint(0) = 3.0f;
+		}
+		else{
+			_velocity_setpoint(0) = -3.0f;
+		}
+		*/
+		_stage = 5;
 
 		break;
-	case 5://bitiş
-		_vehicle_land_detected_pub.publish(_land_detected);
+	case 5:
+		//Done
 		break;
 
 	default:

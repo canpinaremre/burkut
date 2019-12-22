@@ -1,15 +1,23 @@
 #pragma once
 
 #include "FlightTask.hpp"
+#include <cmath>
 
-/*
-#include <uORB/topics/position_setpoint_triplet.h>
-#include <uORB/topics/position_setpoint.h>
+//obstacleAvoidance example
+#include <px4_platform_common/defines.h>
+#include <px4_platform_common/module_params.h>
+#include <commander/px4_custom_mode.h>
+#include <uORB/topics/vehicle_command.h>
+#include <uORB/PublicationQueued.hpp>
 #include <uORB/Publication.hpp>
-#include <uORB/topics/orbit_status.h>
-#include <StraightLine.hpp>
-#include "FlightTaskManualAltitudeSmooth.hpp"
-*/
+//#include <lib/hysteresis/hysteresis.h>
+
+
+
+#include <uORB/topics/vehicle_land_detected.h>
+#include <uORB/topics/position_setpoint_triplet.h>
+
+
 class FlightTaskBurkut : public FlightTask
 {
 
@@ -32,4 +40,15 @@ private:
 	float _yaw_speed = 300.0f;
 	float _counter_speed = 0.01f;
 
+	int32_t _default_mpc_auto_mode = 1;
+protected:
+	DEFINE_PARAMETERS(
+					(ParamInt<px4::params::MPC_AUTO_MODE>) _param_mpc_auto_mode //mode
+				       )
+	uORB::PublicationQueued<vehicle_command_s> _pub_vehicle_command{ORB_ID(vehicle_command)};	/**< vehicle command do publication */
+
+	/**
+	 * Publishes vehicle command.
+	 */
+	void _publishVehicleCmdDoLand();
 };
