@@ -10,7 +10,7 @@ uORB::Publication<vehicle_land_detected_s> _vehicle_land_detected_pub{ORB_ID(veh
 uORB::Publication<position_setpoint_s>	_position_setpoint_pub{ORB_ID(position_setpoint)};
 
 */
-int sonuc = 3;
+
 void FlightTaskBurkut::_publishVehicleCmdDoLand()
 {
 	vehicle_command_s command{};
