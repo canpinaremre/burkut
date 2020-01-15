@@ -35,6 +35,12 @@ void FlightTaskBurkut::_publishVehicleCmdDoLand()
 	updateParams();
 
 }
+void FlightTaskBurkut::_bodyToNedFrame(float xBody,float yBody,float yawBody)
+{
+	//translate body frame to NED frame and publish position setpoints.
+	_position_setpoint(0) = _origin_x + ( xBody * cosf(yawBody) ) - ( yBody * sinf(yawBody) );
+	_position_setpoint(1) = _origin_y + ( xBody * sinf(yawBody) ) + ( yBody * cosf(yawBody) );
+}
 
 
 bool FlightTaskBurkut::activate(vehicle_local_position_setpoint_s last_setpoint)
@@ -75,8 +81,9 @@ bool FlightTaskBurkut::update()
 		//5 metre ileri giderken dönme işlemi başlar.
 
 		_counter = _counter + _counter_speed; // adımı büyütüyoruz
-		_position_setpoint(0) = _origin_x + _counter; // büyütülen adımı güncelliyoruz.
-
+		//_position_setpoint(0) = _origin_x + _counter;
+		// büyütülen adımı güncelliyoruz.
+		_bodyToNedFrame((_counter),0.0f,_origin_yaw); // çevir ve yayınla
 		_yaw_setpoint = _yaw_speed * _counter * 3.141592653589793f / 180.f; //dönüş hareketi yaptırıyoruz.
 
 		//görev aşaması başarı ile tamamlandı ise
@@ -90,7 +97,9 @@ bool FlightTaskBurkut::update()
 
 
 			//sonra hepsi sonraki görev için hafızaya alınır.
-			_origin_x = _origin_x + 5.0f;// x ekseni 5 metre taşınır.Diğer eksenlerde oynama yok.
+			_origin_x = _origin_x + (5.0f * cosf(_origin_yaw));
+			_origin_y = _origin_y + (5.0f * sinf(_origin_yaw));
+			// x ekseni 5 metre taşınır.Diğer eksenlerde oynama yok.
 			//bu sebeple diğerleri değiştirilmez.
 
 
@@ -111,9 +120,13 @@ bool FlightTaskBurkut::update()
 		//bir önceki stage de counter sıfırlanmıştı.Sorunsuz şekilde devam edebiliriz.
 		_counter = _counter + _counter_speed; // adımı büyütüyoruz
 
-		_position_setpoint(0) = _origin_x - _counter; // 5 metre geri
-		_position_setpoint(1) = _origin_y; //y ekseni her zaman aynı origin_y değerine eşit.Ve bu değer değişmemeli.
-		_position_setpoint(2) = _origin_z - _counter; // 5 metre yukarı
+		//_position_setpoint(0) = _origin_x - _counter;
+		// 5 metre geri
+		_bodyToNedFrame((-_counter),0.0f,_origin_yaw);
+		//_position_setpoint(1) = _origin_y;
+		//y ekseni her zaman aynı origin_y değerine eşit.Ve bu değer değişmemeli.
+		_position_setpoint(2) = _origin_z - _counter;
+		// 5 metre yukarı
 
 		//5 metre olunca ve stage-2 geçeceğiz.
 
@@ -123,7 +136,9 @@ bool FlightTaskBurkut::update()
 
 			//sonra hepsi sonraki görev için hafızaya alınır.
 			_origin_z = _origin_z - 5.0f; //-2 metreyi -5 ekleyerek -7 yaptık (NED FRAME)
-			_origin_x = _origin_x - 5.0f; // 5 metreden 5 çıkarak 0 yaptık.
+			_origin_x = _origin_x - (5.0f * cosf(_origin_yaw));
+			_origin_y = _origin_y - (5.0f * sinf(_origin_yaw));
+			// 5 metreden 5 çıkarak 0 yaptık.
 			//y ekseni her zamanki gibi sabit.
 			//counter sıfırlanmalı sonraki görev için.
 			_counter = 0.0f;
@@ -135,7 +150,8 @@ bool FlightTaskBurkut::update()
 		break;
 	case 2:
 		_counter = _counter + _counter_speed; // z ekseninde 5 metre aşağı inme adımları
-		_position_setpoint(2) = _origin_z + _counter; // adımları + olarak ekliyoruz çünkü şuan değer -7 , -7+5 = -2 (hedef 2m NED FRAME)
+		_position_setpoint(2) = _origin_z + _counter;
+		// adımları + olarak ekliyoruz çünkü şuan değer -7 , -7+5 = -2 (hedef 2m NED FRAME)
 		_yaw_setpoint = _yaw_speed * _counter * 3.141592653589793f / 180.f; //dönüş hareketi yaptırıyoruz.
 
 		if(  _counter  >= 5.0f   )
@@ -168,7 +184,8 @@ bool FlightTaskBurkut::update()
 		_radian_of_degree = _counter * 3.141592653589793f / 180.f;
 
 		//setting new setpoints
-		_position_setpoint(0) = _origin_x + (_radius_of_chamber * sinf(_radian_of_degree));
+		//_position_setpoint(0) = _origin_x + (_radius_of_chamber * sinf(_radian_of_degree));
+		_bodyToNedFrame( (_radius_of_chamber * sinf(_radian_of_degree)) , 0.0f,_origin_yaw);
 		_position_setpoint(2) = _origin_z - 3.0f + (_radius_of_chamber * cosf(_radian_of_degree));
 		_yaw_setpoint = _yaw_speed * _counter * 3.141592653589793f / 180.f;
 

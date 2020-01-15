@@ -51,4 +51,5 @@ protected:
 	 * Publishes vehicle command.
 	 */
 	void _publishVehicleCmdDoLand();
+	void _bodyToNedFrame(float xBody,float yBody,float yawBody);
 };
