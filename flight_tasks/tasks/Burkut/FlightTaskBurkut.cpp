@@ -60,6 +60,10 @@ bool FlightTaskBurkut::activate(vehicle_local_position_setpoint_s last_setpoint)
 	_origin_x = _position(0);
 	_origin_yaw = _yaw;
 
+	//yaw speed setted.
+	_yaw_speed = _param_yaw_speed.get();
+
+
 	return ret;
 
 }
@@ -168,8 +172,8 @@ bool FlightTaskBurkut::update()
 			//sonraki görev için gerekli parametreler.Loop değil activate gibi
 			//çalışması için burdaki geçiş koşulunun içerisine yazılır.
 			//her loop başlangıcında bir değeri tekrar atamak zorunda kalmasın diye.
-			_counter_speed = 0.1f;//artık derece olduğu için 10 kat hızlandırıyoruz.
-			_yaw_speed = 30.0f; //yaw hızıda buna bağlı yavaşlatılır.
+			_counter_speed = (_counter_speed * 10.0f);//artık derece olduğu için 10 kat hızlandırıyoruz.
+			_yaw_speed = (_yaw_speed / 10.0f); //yaw hızıda buna bağlı yavaşlatılır.(10kat)
 		}
 
 		break;

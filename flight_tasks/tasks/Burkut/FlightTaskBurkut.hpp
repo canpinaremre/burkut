@@ -43,7 +43,8 @@ private:
 	int32_t _default_mpc_auto_mode = 1;
 protected:
 	DEFINE_PARAMETERS(
-					(ParamInt<px4::params::MPC_AUTO_MODE>) _param_mpc_auto_mode //mode
+					(ParamInt<px4::params::MPC_AUTO_MODE>) _param_mpc_auto_mode, //mode
+					(ParamFloat<px4::params::NAV_LOITER_RAD>) _param_yaw_speed
 				       )
 	uORB::PublicationQueued<vehicle_command_s> _pub_vehicle_command{ORB_ID(vehicle_command)};	/**< vehicle command do publication */
 
